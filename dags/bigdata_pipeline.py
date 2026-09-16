@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from airflow import DAG
-from airflow.operators.bash import BashOperator
+from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
 
 
 with DAG(
@@ -12,38 +12,161 @@ with DAG(
     tags=["bigdata", "kubernetes"],
 ) as dag:
 
-    start = BashOperator(
+    start = KubernetesPodOperator(
         task_id="start",
-        bash_command="echo 'Starting big data pipeline...'",
+        name="airflow-k8s-start",
+        namespace="bigdata",
+        image="apache/airflow:3.2.2",
+        cmds=["bash", "-c"],
+        arguments=[
+            "echo 'Starting big data pipeline from KubernetesPodOperator...'"
+        ],
+        service_account_name="airflow-worker",
+        get_logs=True,
+        is_delete_operator_pod=True,
     )
 
-    check_hdfs = BashOperator(
+    check_hdfs = KubernetesPodOperator(
         task_id="check_hdfs",
-        bash_command="""
-        echo "Checking HDFS..."
-        kubectl get pods -n bigdata | grep hdfs
-        """,
+        name="airflow-k8s-check-hdfs",
+        namespace="bigdata",
+        image="apache/airflow:3.2.2",
+        cmds=["bash", "-c"],
+        arguments=[
+            """
+            python - <<'PY'
+            from kubernetes import client, config
+
+            config.load_incluster_config()
+            v1 = client.CoreV1Api()
+
+            pods = v1.list_namespaced_pod(
+                namespace="bigdata"
+            )
+
+            print("=== HDFS Pods ===")
+
+            found = False
+
+            for pod in pods.items:
+                name = pod.metadata.name
+
+                if "hdfs" in name.lower():
+                    found = True
+                    print(
+                        name,
+                        "->",
+                        pod.status.phase
+                    )
+
+            if not found:
+                print("No HDFS pod found")
+            PY
+            """
+        ],
+        service_account_name="airflow-worker",
+        get_logs=True,
+        is_delete_operator_pod=True,
     )
 
-    check_kafka = BashOperator(
+    check_kafka = KubernetesPodOperator(
         task_id="check_kafka",
-        bash_command="""
-        echo "Checking Kafka..."
-        kubectl get pods -n bigdata | grep kafka
-        """,
+        name="airflow-k8s-check-kafka",
+        namespace="bigdata",
+        image="apache/airflow:3.2.2",
+        cmds=["bash", "-c"],
+        arguments=[
+            """
+            python - <<'PY'
+            from kubernetes import client, config
+
+            config.load_incluster_config()
+            v1 = client.CoreV1Api()
+
+            pods = v1.list_namespaced_pod(
+                namespace="bigdata"
+            )
+
+            print("=== Kafka Pods ===")
+
+            found = False
+
+            for pod in pods.items:
+                name = pod.metadata.name
+
+                if "kafka" in name.lower():
+                    found = True
+                    print(
+                        name,
+                        "->",
+                        pod.status.phase
+                    )
+
+            if not found:
+                print("No Kafka pod found")
+            PY
+            """
+        ],
+        service_account_name="airflow-worker",
+        get_logs=True,
+        is_delete_operator_pod=True,
     )
 
-    check_flink = BashOperator(
+    check_flink = KubernetesPodOperator(
         task_id="check_flink",
-        bash_command="""
-        echo "Checking Flink..."
-        kubectl get pods -n bigdata | grep flink
-        """,
+        name="airflow-k8s-check-flink",
+        namespace="bigdata",
+        image="apache/airflow:3.2.2",
+        cmds=["bash", "-c"],
+        arguments=[
+            """
+            python - <<'PY'
+            from kubernetes import client, config
+
+            config.load_incluster_config()
+            v1 = client.CoreV1Api()
+
+            pods = v1.list_namespaced_pod(
+                namespace="bigdata"
+            )
+
+            print("=== Flink Pods ===")
+
+            found = False
+
+            for pod in pods.items:
+                name = pod.metadata.name
+
+                if "flink" in name.lower():
+                    found = True
+                    print(
+                        name,
+                        "->",
+                        pod.status.phase
+                    )
+
+            if not found:
+                print("No Flink pod found")
+            PY
+            """
+        ],
+        service_account_name="airflow-worker",
+        get_logs=True,
+        is_delete_operator_pod=True,
     )
 
-    finish = BashOperator(
+    finish = KubernetesPodOperator(
         task_id="finish",
-        bash_command="echo 'Big data pipeline finished!'",
+        name="airflow-k8s-finish",
+        namespace="bigdata",
+        image="apache/airflow:3.2.2",
+        cmds=["bash", "-c"],
+        arguments=[
+            "echo 'Big data pipeline finished successfully!'"
+        ],
+        service_account_name="airflow-worker",
+        get_logs=True,
+        is_delete_operator_pod=True,
     )
 
     start >> check_hdfs >> check_kafka >> check_flink >> finish
