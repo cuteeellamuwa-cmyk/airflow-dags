@@ -31,38 +31,23 @@ with DAG(
         name="airflow-k8s-check-hdfs",
         namespace="bigdata",
         image="apache/airflow:3.2.2",
-        cmds=["bash", "-c"],
+        cmds=["python", "-c"],
         arguments=[
             """
-            python - <<'PY'
-            from kubernetes import client, config
-
-            config.load_incluster_config()
-            v1 = client.CoreV1Api()
-
-            pods = v1.list_namespaced_pod(
-                namespace="bigdata"
-            )
-
-            print("=== HDFS Pods ===")
-
-            found = False
-
-            for pod in pods.items:
-                name = pod.metadata.name
-
-                if "hdfs" in name.lower():
-                    found = True
-                    print(
-                        name,
-                        "->",
-                        pod.status.phase
-                    )
-
-            if not found:
-                print("No HDFS pod found")
-            PY
-            """
+from kubernetes import client, config
+config.load_incluster_config()
+v1 = client.CoreV1Api()
+pods = v1.list_namespaced_pod(namespace="bigdata")
+print("=== HDFS Pods ===")
+found = False
+for pod in pods.items:
+    name = pod.metadata.name
+    if "hdfs" in name.lower():
+        found = True
+        print(name, "->", pod.status.phase)
+if not found:
+    print("No HDFS pod found")
+"""
         ],
         service_account_name="airflow-worker",
         get_logs=True,
@@ -74,38 +59,23 @@ with DAG(
         name="airflow-k8s-check-kafka",
         namespace="bigdata",
         image="apache/airflow:3.2.2",
-        cmds=["bash", "-c"],
+        cmds=["python", "-c"],
         arguments=[
             """
-            python - <<'PY'
-            from kubernetes import client, config
-
-            config.load_incluster_config()
-            v1 = client.CoreV1Api()
-
-            pods = v1.list_namespaced_pod(
-                namespace="bigdata"
-            )
-
-            print("=== Kafka Pods ===")
-
-            found = False
-
-            for pod in pods.items:
-                name = pod.metadata.name
-
-                if "kafka" in name.lower():
-                    found = True
-                    print(
-                        name,
-                        "->",
-                        pod.status.phase
-                    )
-
-            if not found:
-                print("No Kafka pod found")
-            PY
-            """
+from kubernetes import client, config
+config.load_incluster_config()
+v1 = client.CoreV1Api()
+pods = v1.list_namespaced_pod(namespace="bigdata")
+print("=== Kafka Pods ===")
+found = False
+for pod in pods.items:
+    name = pod.metadata.name
+    if "kafka" in name.lower():
+        found = True
+        print(name, "->", pod.status.phase)
+if not found:
+    print("No Kafka pod found")
+"""
         ],
         service_account_name="airflow-worker",
         get_logs=True,
@@ -117,38 +87,23 @@ with DAG(
         name="airflow-k8s-check-flink",
         namespace="bigdata",
         image="apache/airflow:3.2.2",
-        cmds=["bash", "-c"],
+        cmds=["python", "-c"],
         arguments=[
             """
-            python - <<'PY'
-            from kubernetes import client, config
-
-            config.load_incluster_config()
-            v1 = client.CoreV1Api()
-
-            pods = v1.list_namespaced_pod(
-                namespace="bigdata"
-            )
-
-            print("=== Flink Pods ===")
-
-            found = False
-
-            for pod in pods.items:
-                name = pod.metadata.name
-
-                if "flink" in name.lower():
-                    found = True
-                    print(
-                        name,
-                        "->",
-                        pod.status.phase
-                    )
-
-            if not found:
-                print("No Flink pod found")
-            PY
-            """
+from kubernetes import client, config
+config.load_incluster_config()
+v1 = client.CoreV1Api()
+pods = v1.list_namespaced_pod(namespace="bigdata")
+print("=== Flink Pods ===")
+found = False
+for pod in pods.items:
+    name = pod.metadata.name
+    if "flink" in name.lower():
+        found = True
+        print(name, "->", pod.status.phase)
+if not found:
+    print("No Flink pod found")
+"""
         ],
         service_account_name="airflow-worker",
         get_logs=True,
