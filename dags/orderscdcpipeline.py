@@ -277,6 +277,9 @@ echo "6. 提交订单 CDC Flink Job"
 echo "========================================"
 
 /opt/bitnami/flink/bin/sql-client.sh \
+    -Drest.address="$FLINK_LEADER_IP" \
+    -Drest.port=8081 \
+    -Dexecution.attached=false \
     -f "$WORKDIR/orderscdctokafka.sql"
 
 
