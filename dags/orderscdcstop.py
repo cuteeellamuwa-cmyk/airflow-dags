@@ -1,6 +1,8 @@
 from datetime import datetime
 
 from airflow import DAG
+from airflow.decorators import task
+from airflow.models import Variable
 from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
 
 
@@ -179,7 +181,8 @@ fi
 
 echo ""
 echo "SAVEPOINT_PATH=$SAVEPOINT_PATH"
-
+mkdir -p /airflow/xcom
+printf '"%s"\n' "$SAVEPOINT_PATH" > /airflow/xcom/return.json
 
 echo ""
 echo "========================================"
@@ -200,5 +203,19 @@ echo "$SAVEPOINT_PATH"
 
         get_logs=True,
 
+        do_xcom_push=True,
+
         startup_timeout_seconds=300,
     )
+
+    @task(task_id="save_savepoint_variable")
+    def save_savepoint_variable(savepoint_path: str):
+        if not savepoint_path:
+            raise ValueError("没有收到 Savepoint Path，不更新 Airflow Variable。")
+
+        Variable.set("orderscdcsink_last_savepoint", savepoint_path)
+
+        print(f"已更新 Airflow Variable:")
+        print(f"orderscdcsink_last_savepoint={savepoint_path}")
+
+    save_savepoint_variable(stop_flink_job.output)
