@@ -51,6 +51,9 @@ with DAG(
         name="ensure-orders-cdc-job",
         namespace=NAMESPACE,
 
+        # 专门用于发现 Flink JobManager Pod 的最小权限 ServiceAccount
+        service_account_name="flinksubmit",
+
         # Flink 1.20.1 Client
         image=FLINK_IMAGE,
 
@@ -85,11 +88,64 @@ with DAG(
 set -e
 
 echo "========================================"
+echo "0. 自动发现 Flink Leader JobManager"
+echo "========================================"
+
+# Kubernetes ServiceAccount Token
+K8S_TOKEN="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
+K8S_CA="/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+K8S_API="https://kubernetes.default.svc"
+
+# 查询当前 namespace 中所有 Flink JobManager Pod
+JM_PODS_JSON="$(curl -fsS \
+    --cacert "$K8S_CA" \
+    -H "Authorization: Bearer $K8S_TOKEN" \
+    "$K8S_API/api/v1/namespaces/{NAMESPACE}/pods?labelSelector=app.kubernetes.io%2Fcomponent%3Djobmanager,app.kubernetes.io%2Finstance%3Dflink")"
+
+# Flink 镜像没有 jq，所以直接用 shell 提取 podIP
+JM_IPS="$(printf '%s' "$JM_PODS_JSON" \
+    | grep -o '"podIP":"[^"]*"' \
+    | cut -d '"' -f4)"
+
+if [ -z "$JM_IPS" ]; then
+    echo "错误：没有发现 Flink JobManager Pod IP。"
+    exit 1
+fi
+
+FLINK_LEADER_IP=""
+
+for ip in $JM_IPS; do
+    echo "检查 JobManager: $ip"
+
+    CODE="$(curl -sS \
+        -o /dev/null \
+        -w "%{{http_code}}" \
+        --connect-timeout 3 \
+        "http://$ip:8081/config" || true)"
+
+    if [ "$CODE" = "200" ]; then
+        FLINK_LEADER_IP="$ip"
+        echo "发现当前 Flink Leader: $FLINK_LEADER_IP"
+        break
+    fi
+
+    echo "JobManager $ip 不是当前 Leader，HTTP=$CODE"
+done
+
+if [ -z "$FLINK_LEADER_IP" ]; then
+    echo "错误：没有找到可用的 Flink Leader JobManager。"
+    exit 1
+fi
+
+FLINK_LEADER="$FLINK_LEADER_IP:8081"
+
+echo ""
+echo "========================================"
 echo "1. 检查订单 CDC Flink Job"
 echo "========================================"
 
 if /opt/bitnami/flink/bin/flink list \
-    -m {FLINK_JOBMANAGER} \
+    -m "$FLINK_LEADER" \
     | grep "{FLINK_JOB_NAME}" \
     | grep "(RUNNING)"; then
 
@@ -203,7 +259,7 @@ ls -lh /opt/bitnami/flink/lib/ | \
 # 7. 配置现有 Flink JobManager
 # ============================================================
 
-export FLINK_CFG_REST_ADDRESS="flink-jobmanager"
+export FLINK_CFG_REST_ADDRESS="$FLINK_LEADER_IP"
 export FLINK_CFG_REST_PORT="8081"
 
 # Streaming Job 提交成功以后让 SQL Client 退出，
@@ -238,7 +294,7 @@ FOUND=0
 for i in 1 2 3 4 5 6; do
 
     if /opt/bitnami/flink/bin/flink list \
-        -m {FLINK_JOBMANAGER} \
+        -m "$FLINK_LEADER" \
         | grep "{FLINK_JOB_NAME}" \
         | grep "(RUNNING)"; then
 
