@@ -129,9 +129,9 @@ echo "发现 CDC Job："
 echo "$JOB_LINE"
 
 
-# Flink list 第一列就是 Job ID
-JOB_ID="$(echo "$JOB_LINE" | awk '{{print $1}}')"
-
+# flink list 格式：
+# 04.10.2026 06:20:54 : <JOB_ID> : <JOB_NAME> (RUNNING)
+JOB_ID="$(echo "$JOB_LINE" | awk '{{print $4}}')"
 
 if [ -z "$JOB_ID" ]; then
     echo "错误：无法解析 Flink Job ID。"
