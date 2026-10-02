@@ -143,29 +143,23 @@ echo "========================================"
 echo "3. 注入 MySQL CDC Secret"
 echo "========================================"
 
-python3 - <<'PYTHON'
-import os
-from pathlib import Path
+# 使用 sed 在运行时注入 Kubernetes Secret
+# 不输出最终 SQL，避免密码出现在 Airflow 日志
+sed \
+    -e "s|\\${CDC_USERNAME}|$CDC_USERNAME|g" \
+    -e "s|\\${CDC_PASSWORD}|$CDC_PASSWORD|g" \
+    "$WORKDIR/orderscdctemplate.sql" \
+    > "$WORKDIR/orderscdctokafka.sql"
 
-source = Path("/tmp/orderscdc/orderscdctemplate.sql")
-target = Path("/tmp/orderscdc/orderscdctokafka.sql")
+# 检查模板变量是否全部替换成功
+if grep -q '\\${CDC_USERNAME}\\|\\${CDC_PASSWORD}' \
+    "$WORKDIR/orderscdctokafka.sql"; then
+    echo "错误：CDC Secret 变量替换失败。"
+    exit 1
+fi
 
-text = source.read_text()
-
-username = os.environ["CDC_USERNAME"]
-password = os.environ["CDC_PASSWORD"]
-
-text = text.replace("${{CDC_USERNAME}}", username)
-text = text.replace("${{CDC_PASSWORD}}", password)
-
-if "${{CDC_USERNAME}}" in text or "${{CDC_PASSWORD}}" in text:
-    raise RuntimeError("CDC Secret 变量替换失败")
-
-target.write_text(text)
-
-print("CDC 用户名和密码已完成运行时注入。")
-print("不会把密码输出到 Airflow 日志。")
-PYTHON
+echo "CDC 用户名和密码已完成运行时注入。"
+echo "不会把密码输出到 Airflow 日志。"
 
 
 # ============================================================
