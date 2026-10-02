@@ -19,8 +19,8 @@ CREATE TABLE ordersource (
     'connector' = 'mysql-cdc',
     'hostname' = 'mysql',
     'port' = '3306',
-    'username' = 'root',
-    'password' = 'cute666',
+    'username' = '${CDC_USERNAME}',
+    'password' = '${CDC_PASSWORD}',
     'database-name' = 'cute',
     'table-name' = 'orders',
     'scan.startup.mode' = 'initial'
