@@ -21,6 +21,7 @@ CREATE TABLE ordersource (
     'port' = '3306',
     'username' = '${CDC_USERNAME}',
     'password' = '${CDC_PASSWORD}',
+    'jdbc.properties.allowPublicKeyRetrieval' = 'true',
     'database-name' = 'cute',
     'table-name' = 'orders',
     'scan.startup.mode' = 'initial'
