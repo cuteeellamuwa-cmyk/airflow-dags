@@ -297,15 +297,15 @@ echo "========================================"
 
 
 sed \
-    -e "s|\\\\${{CDC_USERNAME}}|$CDC_USERNAME|g" \
-    -e "s|\\\\${{CDC_PASSWORD}}|$CDC_PASSWORD|g" \
+    -e 's|${{CDC_USERNAME}}|'"$CDC_USERNAME"'|g' \
+    -e 's|${{CDC_PASSWORD}}|'"$CDC_PASSWORD"'|g' \
     "$WORKDIR/orderscdctemplate.sql" \
     > "$WORKDIR/orderscdctokafka.sql"
 
 
 
-if grep -q '\\\\${{CDC_USERNAME}}\\\\|\\\\${{CDC_PASSWORD}}' \
-    "$WORKDIR/orderscdctokafka.sql"; then
+if grep -Fq '${{CDC_USERNAME}}' "$WORKDIR/orderscdctokafka.sql" || \
+   grep -Fq '${{CDC_PASSWORD}}' "$WORKDIR/orderscdctokafka.sql"; then
 
     echo "错误：CDC Secret 变量替换失败。"
 
