@@ -41,6 +41,11 @@ with DAG(
 
         image=FLINK_IMAGE,
 
+        container_security_context=k8s.V1SecurityContext(
+            run_as_user=0,
+            run_as_group=0,
+        ),
+
         cmds=["bash", "-c"],
 
         # ====================================================
