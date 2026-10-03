@@ -62,5 +62,5 @@ SELECT
     created_at,
     updated_at,
     version,
-    CAST(created_at AS DATE) AS event_date
+    DATE_FORMAT(created_at, 'yyyy-MM-dd') AS event_date
 FROM default_catalog.default_database.orderskafkasource;
