@@ -320,6 +320,7 @@ curl -fL https://repo.maven.apache.org/maven2/org/apache/hadoop/hadoop-client-ru
 curl -fL https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-hive-3.1.3_2.12/1.20.1/flink-sql-connector-hive-3.1.3_2.12-1.20.1.jar   -o $WORKDIR/lib/flink-sql-connector-hive-3.1.3_2.12-1.20.1.jar
 curl -fL https://repo.maven.apache.org/maven2/org/apache/hudi/hudi-flink1.20-bundle/1.2.1/hudi-flink1.20-bundle-1.2.1.jar   -o $WORKDIR/lib/hudi-flink1.20-bundle-1.2.1.jar
 curl -fL https://repo.maven.apache.org/maven2/commons-codec/commons-codec/1.15/commons-codec-1.15.jar -o $WORKDIR/lib/commons-codec-1.15.jar
+curl -fL https://repo.maven.apache.org/maven2/commons-logging/commons-logging/1.2/commons-logging-1.2.jar -o $WORKDIR/lib/commons-logging-1.2.jar
 
 # ============================================================
 # 6. 安装 Connector
