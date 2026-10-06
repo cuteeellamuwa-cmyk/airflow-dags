@@ -151,13 +151,22 @@ echo "2. Stop With Savepoint"
 echo "========================================"
 
 
+set +e
 STOP_OUTPUT="$(/opt/bitnami/flink/bin/flink stop \
     -p "{SAVEPOINT_DIR}" \
     "$JOB_ID" \
     -m "$FLINK_LEADER" 2>&1)"
+STOP_RC=$?
+set -e
 
 
 echo "$STOP_OUTPUT"
+
+
+if [ "$STOP_RC" -ne 0 ]; then
+    echo "错误：flink stop 执行失败，退出码=$STOP_RC"
+    exit "$STOP_RC"
+fi
 
 
 echo ""
@@ -167,15 +176,15 @@ echo "========================================"
 
 
 SAVEPOINT_PATH="$(printf '%s\n' "$STOP_OUTPUT" \
-    | sed -n 's/^Savepoint completed\\. Path: //p' \
+    | grep -oE 'hdfs://[^[:space:]]*/savepoint-[^[:space:]]+' \
     | tail -1)"
 
 
 if [ -z "$SAVEPOINT_PATH" ]; then
-
-    echo "错误：Flink 没有返回 Savepoint Path。"
+    echo "错误：Job 已停止，但无法从 Flink 输出提取 Savepoint Path。"
+    echo "完整 Flink 输出："
+    printf '%s\n' "$STOP_OUTPUT"
     exit 1
-
 fi
 
 
