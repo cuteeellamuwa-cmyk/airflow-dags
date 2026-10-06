@@ -153,6 +153,7 @@ echo "========================================"
 
 set +e
 STOP_OUTPUT="$(/opt/bitnami/flink/bin/flink stop \
+    -Dclient.timeout=5min \
     -p "{SAVEPOINT_DIR}" \
     "$JOB_ID" \
     -m "$FLINK_LEADER" 2>&1)"
