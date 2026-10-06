@@ -400,6 +400,7 @@ if [ -n "$RESTORE_SAVEPOINT" ]; then
         -Drest.address="$FLINK_LEADER_IP" \
         -Drest.port=8081 \
         -Dexecution.attached=false \
+        -Dexecution.checkpointing.interval=10s \
         -Dexecution.state-recovery.path="$RESTORE_SAVEPOINT" \
         -Dexecution.state-recovery.claim-mode=NO_CLAIM \
         -Dexecution.state-recovery.ignore-unclaimed-state=false \
@@ -420,6 +421,7 @@ else
         -Drest.address="$FLINK_LEADER_IP" \
         -Drest.port=8081 \
         -Dexecution.attached=false \
+        -Dexecution.checkpointing.interval=10s \
         -f "$WORKDIR/orderscdctokafka.sql"
 
 
