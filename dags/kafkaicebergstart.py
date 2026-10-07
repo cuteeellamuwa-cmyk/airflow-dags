@@ -255,6 +255,18 @@ test -s "/opt/bitnami/flink/lib/iceberg-flink-runtime-1.20-1.10.1.jar"
 
 echo "Iceberg Flink Runtime 已准备完成。"
 
+echo ""
+echo "下载 Flink Hive Connector（Iceberg Hive Catalog 提交端依赖）..."
+
+curl -fsSL \
+    "https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-hive-3.1.3_2.12/1.20.1/flink-sql-connector-hive-3.1.3_2.12-1.20.1.jar" \
+    -o "/opt/bitnami/flink/lib/flink-sql-connector-hive-3.1.3_2.12-1.20.1.jar"
+
+test -s "/opt/bitnami/flink/lib/flink-sql-connector-hive-3.1.3_2.12-1.20.1.jar"
+
+echo "Flink Hive Connector 已准备完成。"
+
+
 
 echo ""
 echo "========================================"
