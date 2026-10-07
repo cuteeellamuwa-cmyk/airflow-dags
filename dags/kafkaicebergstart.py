@@ -238,15 +238,27 @@ export FLINK_CFG_REST_ADDRESS="$FLINK_LEADER_IP"
 export FLINK_CFG_REST_PORT="8081"
 export FLINK_CFG_EXECUTION_ATTACHED="false"
 
-SUBMIT_OUTPUT="$(/opt/bitnami/flink/bin/flink run \
-    -d \
-    -m "$FLINK_LEADER" \
-    -s "$RESTORE_SAVEPOINT" \
-    -n \
-    -c com.cute.flink.OrdersVersionFilter \
+set +e
+
+SUBMIT_OUTPUT="$(/opt/bitnami/flink/bin/flink run \\
+    -d \\
+    -m "$FLINK_LEADER" \\
+    -s "$RESTORE_SAVEPOINT" \\
+    -n \\
+    -c com.cute.flink.OrdersVersionFilter \\
     "$WORKDIR/ordersversionfilter-1.0.0.jar" 2>&1)"
 
+SUBMIT_RC=$?
+
+set -e
+
 echo "$SUBMIT_OUTPUT"
+
+if [ "$SUBMIT_RC" -ne 0 ]; then
+    echo ""
+    echo "错误：ordersversionfilter 提交失败，退出码=$SUBMIT_RC"
+    exit "$SUBMIT_RC"
+fi
 
 
 echo ""
