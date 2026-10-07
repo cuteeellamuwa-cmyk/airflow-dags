@@ -277,6 +277,19 @@ test -s "/opt/bitnami/flink/lib/commons-logging-1.2.jar"
 
 echo "Commons Logging 已准备完成。"
 
+echo ""
+echo "下载 Flink Kafka Connector（与 JobManager 保持一致）..."
+
+curl -fsSL \
+    "https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-kafka/3.4.0-1.20/flink-sql-connector-kafka-3.4.0-1.20.jar" \
+    -o "/opt/bitnami/flink/lib/flink-sql-connector-kafka-3.4.0-1.20.jar"
+
+test -s \
+    "/opt/bitnami/flink/lib/flink-sql-connector-kafka-3.4.0-1.20.jar"
+
+echo "Flink Kafka Connector 已准备完成."
+
+
 
 
 
