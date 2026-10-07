@@ -266,6 +266,18 @@ test -s "/opt/bitnami/flink/lib/flink-sql-connector-hive-3.1.3_2.12-1.20.1.jar"
 
 echo "Flink Hive Connector 已准备完成。"
 
+echo ""
+echo "下载 Commons Logging（Hive/Hadoop 提交端依赖）..."
+
+curl -fsSL \
+    "https://repo.maven.apache.org/maven2/commons-logging/commons-logging/1.2/commons-logging-1.2.jar" \
+    -o "/opt/bitnami/flink/lib/commons-logging-1.2.jar"
+
+test -s "/opt/bitnami/flink/lib/commons-logging-1.2.jar"
+
+echo "Commons Logging 已准备完成。"
+
+
 
 
 echo ""
