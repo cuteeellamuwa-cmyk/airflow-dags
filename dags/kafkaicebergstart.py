@@ -21,7 +21,7 @@ FLINK_JOB_NAME = "ordersiceberg"
 # ============================================================
 
 with DAG(
-    dag_id="ordersicebergstart",
+    dag_id="kafkaicebergstart",
     description="订单 Kafka 到 Iceberg 实时数据流水线",
     start_date=datetime(2026, 10, 7),
     schedule=None,

@@ -24,7 +24,7 @@ SAVEPOINT_DIR = "hdfs://hdfs-namenode:9000/flink-savepoints"
 # ============================================================
 
 with DAG(
-    dag_id="orderscdcstop",
+    dag_id="sqlkafkastop",
     description="安全停止订单 CDC Flink Job 并创建 Savepoint",
     start_date=datetime(2026, 10, 4),
     schedule=None,

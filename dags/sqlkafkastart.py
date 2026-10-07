@@ -23,7 +23,7 @@ GIT_REPO = "https://github.com/cuteeellamuwa-cmyk/airflow-dags.git"
 # ============================================================
 
 with DAG(
-    dag_id="orderscdcstart",
+    dag_id="sqlkafkastart",
     description="订单CDC实时数据流水线",
     start_date=datetime(2026, 10, 3),
     schedule=None,
