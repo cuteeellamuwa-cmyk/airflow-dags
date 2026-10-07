@@ -14,7 +14,7 @@ NAMESPACE = "bigdata"
 
 FLINK_IMAGE = "bitnamilegacy/flink:1.20.1-debian-12-r5"
 
-FLINK_JOB_NAME = "ordersiceberg"
+FLINK_JOB_NAME = "ordersversionfilter"
 
 SAVEPOINT_DIR = "hdfs://hdfs-namenode:9000/flink-savepoints"
 
@@ -105,7 +105,7 @@ FLINK_LEADER="$FLINK_LEADER_IP:8081"
 
 echo ""
 echo "========================================"
-echo "1. 查找 ordersiceberg Job"
+echo "1. 查找 ordersversionfilter Job"
 echo "========================================"
 
 
@@ -193,7 +193,7 @@ printf '"%s"\\n' "$SAVEPOINT_PATH" > /airflow/xcom/return.json
 
 echo ""
 echo "========================================"
-echo "ordersiceberg Job 已安全停止"
+echo "ordersversionfilter Job 已安全停止"
 echo "========================================"
 
 echo "Job ID:"

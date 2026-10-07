@@ -13,7 +13,7 @@ NAMESPACE = "bigdata"
 
 FLINK_IMAGE = "bitnamilegacy/flink:1.20.1-debian-12-r5"
 
-FLINK_JOB_NAME = "ordersiceberg"
+FLINK_JOB_NAME = "ordersversionfilter"
 
 
 # ============================================================
@@ -195,103 +195,63 @@ fi
 WORKDIR="/tmp/ordersiceberg"
 
 rm -rf "$WORKDIR"
-mkdir -p "$WORKDIR/lib"
+mkdir -p "$WORKDIR"
 
 
 echo ""
 echo "========================================"
-echo "3. 下载 GitHub SQL"
+echo "3. 检查正式 Savepoint"
 echo "========================================"
 
-curl -fsSL \\
-    "https://raw.githubusercontent.com/cuteeellamuwa-cmyk/airflow-dags/main/flink/sql/orderstokafkaiceberg.sql" \\
-    -o "$WORKDIR/orderstokafkaiceberg.sql"
+if [ -z "$RESTORE_SAVEPOINT" ]; then
+    echo "错误：ordersversionfilter 是有状态正式 Job。"
+    echo "未检测到 ordersiceberglastsavepoint，拒绝空 State 启动。"
+    exit 1
+fi
 
-test -s "$WORKDIR/orderstokafkaiceberg.sql"
-
-echo "SQL 下载成功。"
+echo "正式启动模式：SAVEPOINT RESTORE"
+echo "Restore Path:"
+echo "$RESTORE_SAVEPOINT"
 
 
 echo ""
 echo "========================================"
-echo "4. 下载 Kafka / Iceberg / Hive / Hadoop Connector"
+echo "4. 下载 OrdersVersionFilter JAR"
 echo "========================================"
 
-curl -fL \\
-    https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-kafka/3.4.0-1.20/flink-sql-connector-kafka-3.4.0-1.20.jar \\
-    -o "$WORKDIR/lib/flink-sql-connector-kafka-3.4.0-1.20.jar"
+curl -fsSL \
+    "https://raw.githubusercontent.com/cuteeellamuwa-cmyk/airflow-dags/main/jars/ordersversionfilter-1.0.0.jar" \
+    -o "$WORKDIR/ordersversionfilter-1.0.0.jar"
 
-curl -fL \\
-    https://repo.maven.apache.org/maven2/org/apache/iceberg/iceberg-flink-runtime-1.20/1.10.1/iceberg-flink-runtime-1.20-1.10.1.jar \\
-    -o "$WORKDIR/lib/iceberg-flink-runtime-1.20-1.10.1.jar"
+test -s "$WORKDIR/ordersversionfilter-1.0.0.jar"
 
-curl -fL \\
-    https://repo.maven.apache.org/maven2/org/apache/hadoop/hadoop-client-api/3.4.3/hadoop-client-api-3.4.3.jar \\
-    -o "$WORKDIR/lib/hadoop-client-api-3.4.3.jar"
-
-curl -fL \\
-    https://repo.maven.apache.org/maven2/org/apache/hadoop/hadoop-client-runtime/3.4.3/hadoop-client-runtime-3.4.3.jar \\
-    -o "$WORKDIR/lib/hadoop-client-runtime-3.4.3.jar"
-
-curl -fL \\
-    https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-hive-3.1.3_2.12/1.20.1/flink-sql-connector-hive-3.1.3_2.12-1.20.1.jar \\
-    -o "$WORKDIR/lib/flink-sql-connector-hive-3.1.3_2.12-1.20.1.jar"
-
-curl -fL \\
-    https://repo.maven.apache.org/maven2/commons-logging/commons-logging/1.2/commons-logging-1.2.jar \\
-    -o "$WORKDIR/lib/commons-logging-1.2.jar"
+echo "JAR 下载成功："
+ls -lh "$WORKDIR/ordersversionfilter-1.0.0.jar"
 
 
 echo ""
 echo "========================================"
-echo "5. 安装 Connector"
+echo "5. 提交 ordersversionfilter Flink Job"
 echo "========================================"
-
-cp "$WORKDIR/lib/"*.jar /opt/bitnami/flink/lib/
-
-ls -lh /opt/bitnami/flink/lib/ | \\
-    grep -E "connector-kafka|iceberg-flink|connector-hive|hadoop-client|commons-logging"
-
 
 export FLINK_CFG_REST_ADDRESS="$FLINK_LEADER_IP"
 export FLINK_CFG_REST_PORT="8081"
 export FLINK_CFG_EXECUTION_ATTACHED="false"
 
+SUBMIT_OUTPUT="$(/opt/bitnami/flink/bin/flink run \
+    -d \
+    -m "$FLINK_LEADER" \
+    -s "$RESTORE_SAVEPOINT" \
+    -n \
+    -c com.cute.flink.OrdersVersionFilter \
+    "$WORKDIR/ordersversionfilter-1.0.0.jar" 2>&1)"
 
-echo ""
-echo "========================================"
-echo "6. 提交 ordersiceberg Flink Job"
-echo "========================================"
-
-if [ -n "$RESTORE_SAVEPOINT" ]; then
-
-    echo "正在从 Savepoint 恢复 Iceberg Job..."
-
-    /opt/bitnami/flink/bin/sql-client.sh \\
-        -Drest.address="$FLINK_LEADER_IP" \\
-        -Drest.port=8081 \\
-        -Dexecution.attached=false \\
-        -Dexecution.state-recovery.path="$RESTORE_SAVEPOINT" \\
-        -Dexecution.state-recovery.claim-mode=NO_CLAIM \\
-        -Dexecution.state-recovery.ignore-unclaimed-state=false \\
-        -f "$WORKDIR/orderstokafkaiceberg.sql"
-
-else
-
-    echo "正在首次启动 Iceberg Job..."
-
-    /opt/bitnami/flink/bin/sql-client.sh \\
-        -Drest.address="$FLINK_LEADER_IP" \\
-        -Drest.port=8081 \\
-        -Dexecution.attached=false \\
-        -f "$WORKDIR/orderstokafkaiceberg.sql"
-
-fi
+echo "$SUBMIT_OUTPUT"
 
 
 echo ""
 echo "========================================"
-echo "7. 验证 ordersiceberg Job"
+echo "6. 验证 ordersversionfilter Job"
 echo "========================================"
 
 FOUND=0
@@ -314,22 +274,18 @@ done
 
 
 if [ "$FOUND" -ne 1 ]; then
-    echo "错误：ordersiceberg Job 提交后没有进入 RUNNING 状态。"
+    echo "错误：ordersversionfilter Job 提交后没有进入 RUNNING 状态。"
     exit 1
 fi
 
 
 echo ""
 echo "========================================"
-echo "ordersiceberg Pipeline 已正常运行"
+echo "ordersversionfilter → Iceberg Pipeline 已正常运行"
 echo "========================================"
 
-if [ -n "$RESTORE_SAVEPOINT" ]; then
-    echo "启动模式：SAVEPOINT RESTORE"
-    echo "恢复点：$RESTORE_SAVEPOINT"
-else
-    echo "启动模式：INITIAL"
-fi
+echo "启动模式：SAVEPOINT RESTORE"
+echo "恢复点：$RESTORE_SAVEPOINT"
 
 """
         ],
