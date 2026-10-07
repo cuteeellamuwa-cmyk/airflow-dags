@@ -244,6 +244,17 @@ test -s "/opt/bitnami/flink/lib/hadoop-client-runtime-3.4.3.jar"
 
 echo "Hadoop Client 已准备完成。"
 
+echo ""
+echo "下载 Iceberg Flink Runtime（Flink 提交端依赖）..."
+
+curl -fsSL \
+    "https://repo.maven.apache.org/maven2/org/apache/iceberg/iceberg-flink-runtime-1.20/1.10.1/iceberg-flink-runtime-1.20-1.10.1.jar" \
+    -o "/opt/bitnami/flink/lib/iceberg-flink-runtime-1.20-1.10.1.jar"
+
+test -s "/opt/bitnami/flink/lib/iceberg-flink-runtime-1.20-1.10.1.jar"
+
+echo "Iceberg Flink Runtime 已准备完成。"
+
 
 echo ""
 echo "========================================"
