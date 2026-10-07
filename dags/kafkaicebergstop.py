@@ -63,7 +63,7 @@ JM_PODS_JSON="$(curl -fsS \\
 
 JM_IPS="$(printf '%s' "$JM_PODS_JSON" \\
     | grep -oE '"podIP"[[:space:]]*:[[:space:]]*"[^"]+"' \\
-    | sed -E 's/.*"([^"]+)"$/\\\\1/')"
+    | sed -E 's/.*"([^"]+)"$/\\1/')"
 
 if [ -z "$JM_IPS" ]; then
     echo "错误：没有发现 Flink JobManager Pod。"
