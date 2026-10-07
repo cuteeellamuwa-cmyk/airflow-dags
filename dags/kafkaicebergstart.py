@@ -237,6 +237,10 @@ curl -fL \\
     https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-hive-3.1.3_2.12/1.20.1/flink-sql-connector-hive-3.1.3_2.12-1.20.1.jar \\
     -o "$WORKDIR/lib/flink-sql-connector-hive-3.1.3_2.12-1.20.1.jar"
 
+curl -fL \\
+    https://repo.maven.apache.org/maven2/commons-logging/commons-logging/1.2/commons-logging-1.2.jar \\
+    -o "$WORKDIR/lib/commons-logging-1.2.jar"
+
 
 echo ""
 echo "========================================"
@@ -246,7 +250,7 @@ echo "========================================"
 cp "$WORKDIR/lib/"*.jar /opt/bitnami/flink/lib/
 
 ls -lh /opt/bitnami/flink/lib/ | \\
-    grep -E "connector-kafka|iceberg-flink|connector-hive|hadoop-client"
+    grep -E "connector-kafka|iceberg-flink|connector-hive|hadoop-client|commons-logging"
 
 
 export FLINK_CFG_REST_ADDRESS="$FLINK_LEADER_IP"
