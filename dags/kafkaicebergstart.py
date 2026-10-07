@@ -228,6 +228,22 @@ test -s "$WORKDIR/ordersversionfilter-1.0.0.jar"
 echo "JAR 下载成功："
 ls -lh "$WORKDIR/ordersversionfilter-1.0.0.jar"
 
+echo ""
+echo "下载 Hadoop Client（Flink 提交端依赖）..."
+
+curl -fsSL \
+    "https://repo.maven.apache.org/maven2/org/apache/hadoop/hadoop-client-api/3.4.3/hadoop-client-api-3.4.3.jar" \
+    -o "/opt/bitnami/flink/lib/hadoop-client-api-3.4.3.jar"
+
+curl -fsSL \
+    "https://repo.maven.apache.org/maven2/org/apache/hadoop/hadoop-client-runtime/3.4.3/hadoop-client-runtime-3.4.3.jar" \
+    -o "/opt/bitnami/flink/lib/hadoop-client-runtime-3.4.3.jar"
+
+test -s "/opt/bitnami/flink/lib/hadoop-client-api-3.4.3.jar"
+test -s "/opt/bitnami/flink/lib/hadoop-client-runtime-3.4.3.jar"
+
+echo "Hadoop Client 已准备完成。"
+
 
 echo ""
 echo "========================================"
