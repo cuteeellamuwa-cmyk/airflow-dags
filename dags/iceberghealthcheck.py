@@ -11,6 +11,7 @@ from kubernetes import client, config
 SPARK_IMAGE = "192.168.1.115:30500/cute/spark:3.5.9"
 
 SPARK_COMMAND = r"""
+RUN_TAG=$(printf '%s' '{{ run_id }}' | sha256sum | cut -c1-32)
 set -e
 
 /opt/spark/bin/spark-submit \
@@ -33,6 +34,7 @@ set -e
   --conf spark.sql.catalog.iceberg.uri=thrift://hive-metastore:9083 \
   --conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions \
   --conf spark.kubernetes.driver.label.app=icebergfileanalysis \
+  --conf spark.kubernetes.driver.label.airflow-run-id="$RUN_TAG" \
   --conf spark.kubernetes.executor.label.app=icebergfileanalysis \
   --jars local:///opt/iceberg/iceberg-spark-runtime-3.5_2.12-1.10.2.jar \
   local:///opt/spark-job/iceberg-file-analysis.py
@@ -49,7 +51,8 @@ def cleanup_driver(context):
     # 从当前 Airflow 任务日志获取 Driver 名称并不可靠，
     # 因此使用本次运行唯一标识匹配 Driver。
     run_id = context["run_id"]
-    unique_id = re.sub(r"[^a-z0-9]", "", run_id.lower())[-20:]
+    import hashlib
+    unique_id = hashlib.sha256(run_id.encode()).hexdigest()[:32]
 
     config.load_incluster_config()
     api = client.CoreV1Api()
@@ -94,6 +97,7 @@ with DAG(
         in_cluster=True,
         get_logs=True,
         on_finish_action="delete_succeeded_pod",
+        on_success_callback=cleanup_driver,
         random_name_suffix=True,
         cmds=["/bin/bash", "-c"],
         arguments=[SPARK_COMMAND],
