@@ -4,6 +4,9 @@ from airflow import DAG
 from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
 from kubernetes.client import models as k8s
 
+from kubernetes import client, config
+
+
 
 SPARK_IMAGE = "192.168.1.115:30500/cute/spark:3.5.9"
 
@@ -35,6 +38,43 @@ set -e
   local:///opt/spark-job/iceberg-file-analysis.py
 """
 
+
+def cleanup_driver(context):
+    """只删除本次成功完成的 Spark Driver Pod。"""
+
+    import re
+
+    task_instance = context["ti"]
+
+    # 从当前 Airflow 任务日志获取 Driver 名称并不可靠，
+    # 因此使用本次运行唯一标识匹配 Driver。
+    run_id = context["run_id"]
+    unique_id = re.sub(r"[^a-z0-9]", "", run_id.lower())[-20:]
+
+    config.load_incluster_config()
+    api = client.CoreV1Api()
+
+    pods = api.list_namespaced_pod(
+        namespace="bigdata",
+        label_selector="spark-role=driver,app=icebergfileanalysis"
+    ).items
+
+    for pod in pods:
+        labels = pod.metadata.labels or {}
+
+        if labels.get("airflow-run-id") != unique_id:
+            continue
+
+        if pod.status.phase != "Succeeded":
+            continue
+
+        api.delete_namespaced_pod(
+            name=pod.metadata.name,
+            namespace="bigdata"
+        )
+
+        print(f"Deleted Spark Driver: {pod.metadata.name}", flush=True)
+
 with DAG(
     dag_id="iceberghealthcheck",
     start_date=datetime(2026, 10, 8),
@@ -53,7 +93,7 @@ with DAG(
         service_account_name="spark",
         in_cluster=True,
         get_logs=True,
-        on_finish_action="keep_pod",
+        on_finish_action="delete_succeeded_pod",
         random_name_suffix=True,
         cmds=["/bin/bash", "-c"],
         arguments=[SPARK_COMMAND],
