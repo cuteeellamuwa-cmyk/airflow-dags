@@ -96,6 +96,12 @@ echo "2. 下载 Doris Connector"
 curl -fsSL "__CONNECTOR_URL__" \
     -o /opt/bitnami/flink/lib/flink-doris-connector-1.20-26.2.0.jar
 
+echo "下载 Kafka Connector"
+
+curl -fsSL   "https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-kafka/3.4.0-1.20/flink-sql-connector-kafka-3.4.0-1.20.jar"   -o /opt/bitnami/flink/lib/flink-sql-connector-kafka-3.4.0-1.20.jar
+
+test -s /opt/bitnami/flink/lib/flink-sql-connector-kafka-3.4.0-1.20.jar
+
 echo "3. 自动发现 Flink Leader"
 
 K8S_TOKEN="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
