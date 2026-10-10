@@ -98,7 +98,7 @@ curl -fsSL "__CONNECTOR_URL__" \
 
 echo "下载 Kafka Connector"
 
-curl -fsSL   "https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-kafka/3.4.0-1.20/flink-sql-connector-kafka-3.4.0-1.20.jar"   -o /opt/bitnami/flink/lib/flink-sql-connector-kafka-3.4.0-1.20.jar
+curl -fsSL "https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-kafka/3.4.0-1.20/flink-sql-connector-kafka-3.4.0-1.20.jar" -o /opt/bitnami/flink/lib/flink-sql-connector-kafka-3.4.0-1.20.jar
 
 test -s /opt/bitnami/flink/lib/flink-sql-connector-kafka-3.4.0-1.20.jar
 
